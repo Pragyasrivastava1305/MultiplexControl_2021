@@ -157,7 +157,7 @@ for js = 1:size(sv,2)
     proj_array(:,js) = reshape(proj,[size(optim_u2,1)*size(optim_u2,2),1]);
 end
  
-save(fullfile(dirname,['LayerRotation_inet1=',num2str(inet1),'_inet2=',num2str(inet2),'trial=',num2str(itrial),'_original.mat']))
+%save(fullfile(dirname,['LayerRotation_inet1=',num2str(inet1),'_inet2=',num2str(inet2),'trial=',num2str(itrial),'_original.mat']))
 
       
 end

@@ -16,12 +16,17 @@ for ibin =1:size(bin_vec,2)-1
                         
     % extract values from the original vector in each bin
     if size(find(ind_vec),1) ~=0
-        xbinned(ibin) = mean( x_master_vec(ind_vec) );
+        
+        % take mean of the points falling inside the interval
+        xbinned(ibin) = mean(x_master_vec(ind_vec));
         ybinned(ibin) = median( y_master_vec(ind_vec) ); 
        % err_vec(ibin) = std( y_master_vec(ind_vec) ); 
         min_vec(ibin) = min( y_master_vec(ind_vec) );
         max_vec(ibin) = max( y_master_vec(ind_vec) );
+    
     else
+        % if no points fall within the interval, take mean of the
+        % end-points
         xbinned(ibin) = 0.5*( bin_vec(ibin+1) + bin_vec(ibin) );
         ybinned(ibin) = 0; 
        % err_vec(ibin) = 0; 

@@ -1,4 +1,5 @@
-% code to plot E vs alignment, with all curves in one plot; 
+% code to plot E vs alignment, with curves for each plotted in a different
+% subplot
 
 close all; 
 %clear all;
@@ -33,38 +34,34 @@ for inet2 =1:4
         end
     end
 
-    % subplot(4,4,(inet1-1)*4 + inet2)
+    subplot(4,4,(inet1-1)*4 + inet2)
     [xfull, Ifull] = sort(abs(align_all_trials(:)));
     yt = E_all_trials(:);
     yfull = yt(Ifull); 
 
-    %plot(xfull,yfull,'s','color',col_one,'MarkerFaceColor',col_one,'MarkerEdgeColor',col_one ); hold on 
+    plot(xfull,yfull,'s','color',col_one,'MarkerFaceColor',col_one,'MarkerEdgeColor',col_one ); hold on 
     %plot(xfull, yfull)
 
     xl = min((xfull)); 
     xh = max((xfull)); 
     [xvec,yvec,min_vec,max_vec] = binned_vectors((xfull), yfull, 29,[xl xh]);
 
-    % col_one ='k'; 
-    plot((xvec),movmean(yvec,2), '-', 'Marker',mk, 'Color',col_one, 'LineWidth',2, 'MarkerSize',14,...
-                    'MarkerFaceColor',col_one,'MarkerEdgeColor','w'); hold on
-    % plot(xvec,movmean(yvec,2),'LineWidth',2, 'Color', col_one); hold on
+    col_one ='k'; 
+    plot(xvec,movmean(yvec,2),'LineWidth',2, 'Color', col_one); hold on
 
     ylim([0 300])
 
-    % jbfill(xvec, movmean(min_vec,3), movmean(max_vec,3),col_one,col_one, 1, 0.15)
-       
     hold on; 
     set(gca,'fontsize',14)
-    %set(gca,'yscale','log')
+    set(gca,'yscale','log')
 
-%     if inet1 ~=4 
-%         xticklabels([])
-%     end
-% 
-%     if inet2 ~=1
-%         yticklabels([])
-%     end
+    if inet1 ~=4 
+        xticklabels([])
+    end
+
+    if inet2 ~=1
+        yticklabels([])
+    end
 
     grid on
     drawnow
@@ -75,5 +72,3 @@ end
 
 % legend('ER', 'WS', 'BA', 'RG')
 end
-legend('ER-ER', 'ER-WS', 'ER-BA', 'ER-RG', 'WS-ER', 'WS-WS','WS-BA', 'WS-RG', ...
-              'BA-ER', 'BA-WS','BA-BA', 'BA-RG','RG-ER', 'RG-WS','RG-BA', 'RG-RG' )

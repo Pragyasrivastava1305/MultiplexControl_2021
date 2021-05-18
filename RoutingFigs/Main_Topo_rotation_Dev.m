@@ -1,4 +1,4 @@
-% Code to calculate global control as a function of layer-alignment
+% Code to calculate control channels as a function of layer-alignment
 % we store results for each trial
 % author:        @pragyasr
 % created in:    Fall, 2020
@@ -24,21 +24,24 @@ sv = linspace(0,1,N_rot);
 % green = [0, 1, 0];
 % colors_p = [linspace(blue(1),blue(1),clen)', linspace(blue(2),green(2),clen)', linspace(blue(3),green(3),clen)'];
 
-E2_array = zeros(N, size(sv,2)); 
+
 
 % density of network and the initial state
 rho1 = 0.25;
 rho2 = 0.25; 
 X0 = zeros(2*N,1); 
 % assign control input matrix
-B = zeros(2*N, N); 
+B = zeros(2*N,2*N); 
 B(1:N,1:N) = eye(N); 
+itrial =1;
+
+
 
 for itrial = 1:ntrial
-% itrial
+itrial
 % mkdir(['Network_analysis/trial=',num2str(itrial)])
 % dirname = ['Network_analysis/trial=',num2str(itrial)]; 
-mkdir(['trial=',num2str(itrial)])
+% mkdir(['trial=',num2str(itrial)])
 dirname = ['trial=',num2str(itrial)]; 
     
 % initiate arrays to store state, optimal input and projection 
@@ -50,6 +53,7 @@ mu_array = zeros(N, N_rot); % should not change along N_rot direction
 
 for inet1 =1:4
 for inet2 =1:4
+% [inet1 inet2]
 
 % build initial duplex
 Duplex0 = init_duplex(inet1, inet2, rho1, rho2, N,0);
@@ -101,10 +105,10 @@ th = pi/2;
 % Define and calculate the rotated Duplex_R
 Duplex_R = Duplex; 
 
-alignment = zeros(N^2,size(sv,2)); 
+alignment = zeros(N,size(sv,2)); 
+
 %%% GENERATE ROTATED NETWORKS AND CALCULATE CONTROL
 for js = 1:size(sv,2)
-    [ itrial inet1 inet2 js]
     s = sv(js);
     % define rotation from rotor 
     Rs = expm(-s*th*rotor);
@@ -115,28 +119,42 @@ for js = 1:size(sv,2)
         
     VR = VR(:,IR);
        
-    alignment(:,js) = reshape(VR'*V1, [N^2,1]) ;       
+    alignment(:,js) = VR(:,end)'*V1;       
     % define the new duplex 
     Duplex_R(1+N:2*N, 1+N:2*N) = MatR; 
+     
+    % write matrix for one realization
+    if itrial ==1
+    writematrix(Duplex_R, fullfile(dirname,['Duplex_inet1=',num2str(inet1),...
+                 '_inet2=',num2str(inet2),'_s=',num2str(js), '.csv']),'delimiter','tab') ; 
+    end
+   
+%   imagesc(Duplex_R); colorbar; drawnow
+   
+    % calculate the state, costate and control input for N-th eigenmode
+    XF2 = [zeros(N,1); VR(:,N)]; 
+    [x2,u2,v2,n_err2] = min_eng_cont(Duplex, T, B, X0, XF2, nt,0); 
+    optim_u2 = u2(:,1:N)'; 
+     
     
-    % calculate the state, costate and energy corresponding to each eigendirection
-    X0 = zeros(2*N,1); 
+%   uncomment to check if -VR state has same control energy. It should
+%   XF2p = [zeros(N,1); -VR(:,N)]; 
+%   [x2p,u2p,v2p,n_err2p] = min_eng_cont(Duplex, T, B, X0, XF2p, nt,0); 
+%   optim_u2p = u2p(:,1:N)'; 
+         
+    for iter = 1:nt+1
+        ener_densL2(iter) = optim_u2(:,iter)'*optim_u2(:,iter); 
         
-    for j_eig = 1:N
-        % specify final states along eigen-directions
-        XF2 = [zeros(N,1); V2(:,j_eig)]; 
-        [x2,u2,v2,n_err2] = min_eng_cont(Duplex, T, B, X0, XF2, nt,0); 
-        optim_u2 = u2(:,1:N)'; 
+        % calculate the projection of optim_u2 along eigenvectors of the first layer 
+        proj(:,iter) = optim_u2(:,iter)'*V1; 
+%         ener_densL2p(iter) = optim_u2p(:,iter)'*optim_u2p(:,iter); 
+    end
 
-        for iter = 1:nt+1
-                ener_densL2(iter) = optim_u2(:,iter)'*optim_u2(:,iter); 
-        end
-        E2(j_eig) = trapz(tarray,ener_densL2);
-    end    % end of loop over eigenstates
-        
-    E2_array(:, js) = E2;
-    
-    
+    E2(js) = trapz(tarray,ener_densL2);     
+%     E2p(js) = trapz(tarray,ener_densL2p);
+    x2_array(:,js) = reshape(x2,[size(x2,1)*size(x2,2),1]); 
+    u2_array(:,js) = reshape(optim_u2,[size(optim_u2,1)*size(optim_u2,2),1]);
+    proj_array(:,js) = reshape(proj,[size(optim_u2,1)*size(optim_u2,2),1]);
 end
  
 save(fullfile(dirname,['LayerRotation_inet1=',num2str(inet1),'_inet2=',num2str(inet2),'trial=',num2str(itrial),'_original.mat']))
